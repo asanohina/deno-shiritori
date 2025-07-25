@@ -40,25 +40,8 @@
       }
     }
 
-    window.onload = async (event) => {
-
-      // GET/shiritoriを実行
-      const response = await fetch("/shiritori", { method: "GET" });
-      // responseの中からレスポンスのテキストデータを取得
-      const previousWord = await response.text();
-      const paragraph = document.querySelector("#previousWord");
-      if (previousWord === "10000") {
-        paragraph.innerHTML = "";
-      } else {
-        paragraph.innerHTML = `前の単語: ${previousWord}`;
-        await updateHistory();
-      }
-    }
-
-    // 送信ボタンの押下時に実行
-    document.querySelector("#nextWordSendButton").onclick = async (event) => {
-      event.preventDefault();
-
+    // 送信ボタン押下時の処理
+    async function sendWord() {
       const nextWordInput = document.querySelector("#nextWordInput");
       const nextWordInputText = nextWordInput.value;
 
@@ -74,8 +57,7 @@
       } else {
         const result = await response.json();
         const paragraph = document.querySelector("#previousWord");
-        paragraph.innerHTML = `前の単語: ${responseWord}`;
-
+        paragraph.innerHTML = `前の単語: ${result.previousWord}`;
         nextWordInput.value = "";
 
         if (result.gameOver === true) {
@@ -84,8 +66,23 @@
         }
         await updateHistory();
       }
-    };
+    }
 
+    window.onload = async (event) => {
+
+      // GET/shiritoriを実行
+      const response = await fetch("/shiritori", { method: "GET" });
+      // responseの中からレスポンスのテキストデータを取得
+      const previousWord = await response.text();
+      const paragraph = document.querySelector("#previousWord");
+      if (previousWord === "10000") {
+        paragraph.innerHTML = "";
+      } else {
+        paragraph.innerHTML = `前の単語: ${previousWord}`;
+        await updateHistory();
+      }
+      document.querySelector("#nextWordSendButton").onclick = sendWord;
+    };
 
     // リセットボタンの押下時に実行
     document.querySelector("#resetButton").onclick = async (event) => {
@@ -104,7 +101,8 @@
         alert(result.message);
 
         await updateHistory();
-        // 入力欄と送信ボタンを再表示
+
+        // 入力フォームと送信ボタンがなければ再追加
         if (!document.querySelector("#nextWordInput")) {
           const input = document.createElement("input");
           input.id = "nextWordInput";

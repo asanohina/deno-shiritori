@@ -15,17 +15,35 @@ Deno.serve(async (_req) => {
     // 「===」は完全一致を確認する演算子
     if (_req.method === "GET" && pathname === "/shiritori") {
         const lastWord = wordHistory[wordHistory.length - 1];
-        return new Response(previousWord);
+        return new Response(lastWord);
+    }
+    
+    // GET /history : 単語履歴を返す
+    if (_req.method === "GET" && pathname === "/history") {
+        return new Response(
+        JSON.stringify({ history: wordHistory }),
+            {
+                status: 200,
+                headers: { "Content-Type": "application/json; charset=utf-8" },
+            }
+        );
     }
 
     // POST/shiritori: 次の単語を受け取って保存する
     if (_req.method === "POST" && pathname === "/shiritori") {
+        
+        const toHiragana = (str) =>
+            str.replace(/[ァ-ン]/g, (s) =>
+                String.fromCharCode(s.charCodeAt(0) - 0x60)
+        );
         // リクエストのペイロードを取得
-        const json = await req.json();
+        const requestJson = await _req.json();
         // JSONの中からnextWordを取得
         const nextWord = requestJson["nextWord"];
 
+        // 使用時に毎回取得する
         const previousWord = wordHistory[wordHistory.length - 1];
+
 
         // previousWordの末尾とnextWordの先頭が同一か確認
         // previousWord.slice(-1)はpreviousWordの末尾の文字を取得
@@ -37,7 +55,7 @@ Deno.serve(async (_req) => {
             return new Response(
                 JSON.stringify({
                     "errorMessage": "前の単語に続いていません",
-                    "errorCode": "10001",
+                    errorCode: "10001"
                 }),
                 {
                     status: 400,  // HTTPステータスコード400はBad Requestを意味する
@@ -46,57 +64,34 @@ Deno.serve(async (_req) => {
                     },
                 },
             );
+        }
 
-            if (wordHistory.includes(nextWord)) {
-                return new Response(
-                    JSON.stringify({
-                        message: "同じ単語が入力されました。",
-                        previousWord,
-                        gameOver: true,
-                    }),
-                    {
-                        status: 200,
-                        headers: { "Content-Type": "application/json; charset=utf-8" },
-                    }, 
-                );
-            }
-
-            wordHistory.push(nextWord);
-
-            // 末尾が「ん」になっている場合
-            if (previousWord.slice(-1) === "ん") {
-                // サーバーから「終了」のメッセージを返す
-                return new Response(
-                    JSON.stringify({
-                        "message": "しりとりが終了しました",
-                        "previousWord": previousWord,
-                        "gameOver": true
-                    }),
-                    {
-                        status: 200,  // HTTPステータスコード200は成功を意味する
-                        headers: {
-                            "Content-Type": "application/json; charset=utf-8",
-                        },
-                    }
-                );
-            }
-
-            // GET /history : 単語履歴を返す
-            if (req.method === "GET" && pathname === "/history") {
-                return new Response(
-                JSON.stringify({ history: wordHistory }),
-                {
-                    status: 200,
-                    headers: { "Content-Type": "application/json; charset=utf-8" },
-                }
-                );
-            }
-
-            
+        if (wordHistory.includes(nextWord)) {
             return new Response(
                 JSON.stringify({
-                    "message": "OK",
+                    message: "同じ単語が入力されました。",
+                    previousWord,
+                    gameOver: true,
+                }),
+                {
+                    status: 200,
+                    headers: {
+                        "Content-Type": "application/json; charset=utf-8"
+                    },
+                }, 
+            );
+        }
+
+        wordHistory.push(nextWord);
+
+        // 末尾が「ん」になっている場合
+        if (nextWord.slice(-1) === "ん") {
+            // サーバーから「終了」のメッセージを返す
+            return new Response(
+                JSON.stringify({
+                    "message": "しりとりが終了しました",
                     "previousWord": nextWord,
+                    "gameOver": true,
                 }),
                 {
                     status: 200,  // HTTPステータスコード200は成功を意味する
@@ -106,17 +101,32 @@ Deno.serve(async (_req) => {
                 }
             );
         }
+            
+        return new Response(
+            JSON.stringify({
+                "message": "OK",
+                "previousWord": nextWord,
+            }),
+            {
+                status: 200,  // HTTPステータスコード200は成功を意味する
+                headers: {
+                    "Content-Type": "application/json; charset=utf-8",
+                },
+            }
+        );
+    }
+        
 
     // POST /reset: リセットする
     // _req.methodとpathnameを確認
-    if (req.method === "POST" && pathname === "/reset") {
-    wordHistory = ["しりとり"];
+    if (_req.method === "POST" && pathname === "/reset") {
+        wordHistory = ["しりとり"];
 
-    return new Response(
-        JSON.stringify({
-            message: "しりとりがリセットされました",
-            previousWord: "しりとり",
-        }),
+        return new Response(
+            JSON.stringify({
+                message: "しりとりがリセットされました",
+                previousWord: "しりとり",
+            }),
             {
                 status: 200,
                 headers: { "Content-Type": "application/json; charset=utf-8" },
@@ -139,4 +149,4 @@ Deno.serve(async (_req) => {
             enableCors: true,
         },
     );
-}});
+});
