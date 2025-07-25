@@ -96,7 +96,8 @@
       // ページ読み込み時にGET/shiritoriを実行
       const response = await fetch("/shiritori", { method: "GET" });
       // 初期の単語を表示。responseの中からレスポンスのテキストデータを取得
-      const previousWord = await response.text();
+      const data = await response.json();
+      const previousWord = data.lastWord;
       const paragraph = document.querySelector("#previousWord");
 
       if (previousWord) {

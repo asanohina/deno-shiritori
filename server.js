@@ -15,7 +15,15 @@ Deno.serve(async (_req) => {
     // 「===」は完全一致を確認する演算子
     if (_req.method === "GET" && pathname === "/shiritori") {
         const lastWord = wordHistory[wordHistory.length - 1];
-        return new Response(lastWord);
+        return new Response(
+            JSON.stringify({ lastWord: lastWord }), // JSONを返す
+            {
+                status: 200,
+                headers: {
+                    "Content-Type": "application/json; charset=utf-8"
+                },
+            }
+        );
     }
     
     // GET /history : 単語履歴を返す
