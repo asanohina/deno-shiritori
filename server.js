@@ -126,6 +126,7 @@ Deno.serve(async (_req) => {
     console.log(`pathname: ${pathname}`);
 
     // GET/shiritori: 直前の単語を返す
+    // 「===」は完全一致を確認する演算子
     if (_req.method === "GET" && pathname === "/shiritori") {
         return new Response(previousWord);
     }
@@ -138,18 +139,39 @@ Deno.serve(async (_req) => {
         const nextWord = requestJson["nextWord"];
 
         // previousWordの末尾とnextWordの先頭が同一か確認
+        // previousWord.slice(-1)はpreviousWordの末尾の文字を取得
+        // nextWord.slice(0, 1)はnextWordの先頭の文字
         if (previousWord.slice(-1) === nextWord.slice(0, 1)) {
             // 同一であれば、previousWordを更新
             previousWord = nextWord;
+
+            // 末尾が「ん」になっている場合
+            if (previousWord.slice(-1) === "ん") {
+                // サーバーから「終了」のメッセージを返す
+                return new Response(
+                    JSON.stringify({
+                        "message": "しりとりが終了しました",
+                        "previousWord": previousWord,
+                    }),
+                    {
+                        status: 200,  // HTTPステータスコード200は成功を意味する
+                        headers: {
+                            "Content-Type": "application/json; charset=utf-8",
+                        },
+                    },
+                );
+            };
+
         } // 同一でない単語の入力時に、エラーを返す
         else {
+            // サーバーからエラーを返す
             return new Response(
                 JSON.stringify({
                     "errorMessage": "前の単語に続いていません",
                     "errorCode": "10001",
                 }),
                 {
-                    status: 400,
+                    status: 400,  // HTTPステータスコード400はBad Requestを意味する
                     headers: {
                         "Content-Type": "application/json; charset=utf-8",
                     },
@@ -162,11 +184,12 @@ Deno.serve(async (_req) => {
     }
 
     // ./public以下のファイルを公開
+    // ユーザーがブラウザでファイルにアクセスできるようにする
     return serveDir(
         _req,
         {
             /*
-            - fsRoot: 公開するフォルダを指定
+            - fsRoot: 公開するフォルダを指定　（./public/以下のファイルを公開）
             - urlRoot: フォルダを展開するURLを指定。今回はlocalhost:8000/に直に展開する。
             - enableCors: CORSの設定を付加するか
             */
