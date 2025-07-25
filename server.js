@@ -46,7 +46,9 @@ Deno.serve(async (_req) => {
                         },
                     },
                 );
-            };
+            } else {
+                return new Response(previousWord);
+            }
 
         } // 同一でない単語の入力時に、エラーを返す
         else {
@@ -74,6 +76,7 @@ Deno.serve(async (_req) => {
     if (_req.method === "POST" && pathname === "/reset") {
         // previousWordを初期値にリセット
         previousWord = "しりとり";
+
 
         // リセット完了のメッセージを返す
         return new Response(
