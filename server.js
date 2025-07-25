@@ -49,7 +49,7 @@ Deno.serve(async (_req) => {
             // previousWord = nextWord;
             return new Response(
                 JSON.stringify({
-                    "errorMessage": "前の単語に続いていません",
+                    "errorMessage": `「${previousWord.slice(-1)}」から始まる単語を入力してください。`,
                     errorCode: "10001"
                 }),
                 {
