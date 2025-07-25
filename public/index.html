@@ -19,18 +19,40 @@
   <button id="nextWordSendButton">送信</button>
   <button id="resetButton">リセット</button>
 
+  <h2>しりとり履歴</h2>
+  <ul id="historyList"></ul>
+
+
   <!-- JavaScriptを実行 -->
   <script>
+    async function updateHistory() {
+      const response = await fetch("/history");
+      if (response.status === 200) {
+        const data = await response.json();
+        const historyList = document.querySelector("#historyList");
+        historyList.innerHTML = ""; // 一度リセット
+
+        for (const word of data.history) {
+          const li = document.createElement("li");
+          li.textContent = word;
+          historyList.appendChild(li);
+        }
+      }
+    }
+
     window.onload = async (event) => {
 
       // GET/shiritoriを実行
       const response = await fetch("/shiritori", { method: "GET" });
       // responseの中からレスポンスのテキストデータを取得
       const previousWord = await response.text();
-      // id: previousWordのタグを取得
       const paragraph = document.querySelector("#previousWord");
-      // 取得したタグの中身を書き換える
-      paragraph.innerHTML = `前の単語: ${previousWord}`;
+      if (previousWord === "10000") {
+        paragraph.innerHTML = "";
+      } else {
+        paragraph.innerHTML = `前の単語: ${previousWord}`;
+        await updateHistory();
+      }
     }
 
     // 送信ボタンの押下時に実行
@@ -50,10 +72,17 @@
         const errorJson = await response.json();
         alert(errorJson["errorMessage"]);
       } else {
-        const responseText = await response.text();
+        const result = await response.json();
         const paragraph = document.querySelector("#previousWord");
-        paragraph.innerHTML = `前の単語: ${responseText}`;
+        paragraph.innerHTML = `前の単語: ${responseWord}`;
+
         nextWordInput.value = "";
+
+        if (result.gameOver === true) {
+          document.querySelector("#nextWordInput").remove();
+          document.querySelector("#nextWordSendButton").remove();
+        }
+        await updateHistory();
       }
     };
 
@@ -73,6 +102,23 @@
         const paragraph = document.querySelector("#previousWord");
         paragraph.innerHTML = `前の単語: ${result.previousWord}`;
         alert(result.message);
+
+        await updateHistory();
+        // 入力欄と送信ボタンを再表示
+        if (!document.querySelector("#nextWordInput")) {
+          const input = document.createElement("input");
+          input.id = "nextWordInput";
+          input.type = "text";
+          const sendButton = document.createElement("button");
+          sendButton.id = "nextWordSendButton";
+          sendButton.textContent = "送信";
+          sendButton.onclick = document.querySelector("#nextWordSendButton").onclick;
+
+          const resetButton = document.querySelector("#resetButton");
+          document.body.insertBefore(input, resetButton);
+          document.body.insertBefore(sendButton, resetButton);
+        }
+
       } else {
         alert("リセットに失敗しました。");
       }
