@@ -5,7 +5,7 @@
   <!-- headタグの中にはメタデータ等を記載する -->
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Document</title>
+  <title>しりとりゲーム</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 
@@ -15,13 +15,12 @@
   <!-- 現在の単語を表示する場所 -->
   <p id="previousWord"></p>
   <!-- 次の文字を入力するフォーム -->
-  <input id="nextWordInput" type="text" />
+  <input id="nextWordInput" type="text" placeholder="次の単語を入力" />
   <button id="nextWordSendButton">送信</button>
   <button id="resetButton">リセット</button>
 
   <h2>しりとり履歴</h2>
   <ul id="historyList"></ul>
-
 
   <!-- JavaScriptを実行 -->
   <script>
@@ -30,7 +29,7 @@
       if (response.status === 200) {
         const data = await response.json();
         const historyList = document.querySelector("#historyList");
-        historyList.innerHTML = ""; // 一度リセット
+        historyList.innerHTML = ""; // 既存のリストをクリア
 
         for (const word of data.history) {
           const li = document.createElement("li");
@@ -43,7 +42,12 @@
     // 送信ボタン押下時の処理
     async function sendWord() {
       const nextWordInput = document.querySelector("#nextWordInput");
-      const nextWordInputText = nextWordInput.value;
+      const nextWordInputText = nextWordInput.value.trim();
+
+      if (!nextWordInputText) {
+        alert("単語を入力してください。");
+        return;
+      }
 
       const response = await fetch("/shiritori", {
         method: "POST",
@@ -58,29 +62,37 @@
         const result = await response.json();
         const paragraph = document.querySelector("#previousWord");
         paragraph.innerHTML = `前の単語: ${result.previousWord}`;
-        nextWordInput.value = "";
+        nextWordInput.value = "";  // 入力フィールドをクリア
 
         if (result.gameOver === true) {
+          // ゲームオーバーの場合、入力フォームと送信ボタンを削除
           document.querySelector("#nextWordInput").remove();
           document.querySelector("#nextWordSendButton").remove();
+
+          if (inputEllement) {
+            inputElement.remove();
+          }
+          if (sendButtonElement) sendButtonElement.remove();
+          alert(result.message);  // ゲームオーバーメッセージを表示
         }
-        await updateHistory();
+        await updateHistory();  // 履歴を更新
       }
     }
 
     window.onload = async (event) => {
 
-      // GET/shiritoriを実行
+      // ページ読み込み時にGET/shiritoriを実行
       const response = await fetch("/shiritori", { method: "GET" });
-      // responseの中からレスポンスのテキストデータを取得
+      // 初期の単語を表示。responseの中からレスポンスのテキストデータを取得
       const previousWord = await response.text();
       const paragraph = document.querySelector("#previousWord");
-      if (previousWord === "10000") {
-        paragraph.innerHTML = "";
-      } else {
+
+      if (previousWord) {
         paragraph.innerHTML = `前の単語: ${previousWord}`;
-        await updateHistory();
+      } else {
+        paragraph.innerHTML = "しりとりを始めよう！";  // もし初期単語が取得できない場合
       }
+      await updateHistory();
       document.querySelector("#nextWordSendButton").onclick = sendWord;
     };
 

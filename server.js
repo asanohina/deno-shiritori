@@ -21,7 +21,7 @@ Deno.serve(async (_req) => {
     // GET /history : 単語履歴を返す
     if (_req.method === "GET" && pathname === "/history") {
         return new Response(
-        JSON.stringify({ history: wordHistory }),
+            JSON.stringify({ history: wordHistory }),
             {
                 status: 200,
                 headers: { "Content-Type": "application/json; charset=utf-8" },
@@ -44,7 +44,7 @@ Deno.serve(async (_req) => {
         // previousWord.slice(-1)はpreviousWordの末尾の文字を取得
         // nextWord.slice(0, 1)はnextWordの先頭の文字
 
-        if (previousWord.slice(-1) === nextWord.slice(0, 1)) {
+        if (previousWord.slice(-1) !== nextWord.slice(0, 1)) {
             // // 同一であれば、previousWordを更新
             // previousWord = nextWord;
             return new Response(
@@ -64,8 +64,8 @@ Deno.serve(async (_req) => {
         if (wordHistory.includes(nextWord)) {
             return new Response(
                 JSON.stringify({
-                    message: "同じ単語が入力されました。",
-                    previousWord,
+                    message: "「${nextWord}」はすでに使用されています。ゲームオーバー！",
+                    previousWord, // ゲームオーバーの原因となった単語
                     gameOver: true,
                 }),
                 {
@@ -84,7 +84,7 @@ Deno.serve(async (_req) => {
             // サーバーから「終了」のメッセージを返す
             return new Response(
                 JSON.stringify({
-                    "message": "しりとりが終了しました",
+                    "message": "「${nextWord}」で「ん」がつきました。ゲームオーバー！",
                     "previousWord": nextWord,
                     "gameOver": true,
                 }),
@@ -101,6 +101,7 @@ Deno.serve(async (_req) => {
             JSON.stringify({
                 "message": "OK",
                 "previousWord": nextWord,
+                "gameOver": false,
             }),
             {
                 status: 200,  // HTTPステータスコード200は成功を意味する
@@ -111,21 +112,11 @@ Deno.serve(async (_req) => {
         );
     }
 
-    // GET /history : 単語履歴を返す
-    if (_req.method === "GET" && pathname === "/history") {
-        return new Response(
-            JSON.stringify({ history: wordHistory }),
-            {
-                status: 200,
-                headers: { "Content-Type": "application/json; charset=utf-8" },
-            }
-        );
-    }
 
     // POST /reset: リセットする
     // _req.methodとpathnameを確認
     if (_req.method === "POST" && pathname === "/reset") {
-        wordHistory = ["しりとり"];
+        wordHistory = ["しりとり"];  // 初期単語にリセット
 
         return new Response(
             JSON.stringify({
