@@ -31,11 +31,6 @@ Deno.serve(async (_req) => {
 
     // POST/shiritori: 次の単語を受け取って保存する
     if (_req.method === "POST" && pathname === "/shiritori") {
-        
-        const toHiragana = (str) =>
-            str.replace(/[ァ-ン]/g, (s) =>
-                String.fromCharCode(s.charCodeAt(0) - 0x60)
-        );
         // リクエストのペイロードを取得
         const requestJson = await _req.json();
         // JSONの中からnextWordを取得
@@ -115,7 +110,17 @@ Deno.serve(async (_req) => {
             }
         );
     }
-        
+
+    // GET /history : 単語履歴を返す
+    if (_req.method === "GET" && pathname === "/history") {
+        return new Response(
+            JSON.stringify({ history: wordHistory }),
+            {
+                status: 200,
+                headers: { "Content-Type": "application/json; charset=utf-8" },
+            }
+        );
+    }
 
     // POST /reset: リセットする
     // _req.methodとpathnameを確認
