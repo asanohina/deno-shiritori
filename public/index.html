@@ -91,20 +91,27 @@
       }
     }
 
-    window.onload = async (event) => {
-
-      // ページ読み込み時にGET/shiritoriを実行
-      const response = await fetch("/shiritori", { method: "GET" });
-      // 初期の単語を表示。responseの中からレスポンスのテキストデータを取得
-      const data = await response.json();
-      const previousWord = data.lastWord;
+    window.onload = async () => {
       const paragraph = document.querySelector("#previousWord");
+      try {
+        const response = await fetch("/shiritori", { method: "GET" });
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        const previousWord = data.lastWord;
 
-      if (previousWord) {
-        paragraph.innerHTML = `前の単語: ${previousWord}`;
-      } else {
-        paragraph.innerHTML = "しりとりを始めよう！";  // もし初期単語が取得できない場合
+        if (previousWord) {
+          paragraph.innerHTML = `前の単語: ${previousWord}`;
+        } else {
+          // サーバーが空のlastWordを返す可能性がある場合に備える
+          paragraph.innerHTML = "しりとりを始めよう！";
+        }
+      } catch (error) {
+        console.error("初期単語の取得に失敗しました:", error);
+        paragraph.innerHTML = "初期単語の読み込みに失敗しました。"; // エラー表示
       }
+
       await updateHistory();
       document.querySelector("#nextWordSendButton").onclick = sendWord;
     };
