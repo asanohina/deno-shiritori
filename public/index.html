@@ -22,6 +22,8 @@
   <h2>しりとり履歴</h2>
   <ul id="historyList"></ul>
 
+  <script src="/moji-master/dist/moji.js"></script>
+
   <!-- JavaScriptを実行 -->
   <script>
     async function updateHistory() {
@@ -42,12 +44,19 @@
     // 送信ボタン押下時の処理
     async function sendWord() {
       const nextWordInput = document.querySelector("#nextWordInput");
-      const nextWordInputText = nextWordInput.value.trim();
+      let nextWordInputText = nextWordInput.value.trim();
 
       if (!nextWordInputText) {
         alert("単語を入力してください。");
         return;
       }
+
+      // mojiを使って半角カタカナと全角カタカナをひらがなに変換
+      nextWordInputText = moji(nextWordInputText)
+        .convert("HK", "HG")  // 半角カナ→ひらがな
+        .convert("KK", "HG")  // 全角カナ→ひらがな
+        .toString();
+
 
       // タイムアウトを設定するAbortsController
       const controller = new AbortController();
@@ -149,8 +158,6 @@
       }
     };
   </script>
-
-  <script src="/moji-master/dist/moji.js"></script>
 
 </body>
 

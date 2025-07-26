@@ -10,67 +10,125 @@ Deno.serve(
         port: 8000, // ポート番号
     },
     async (_req) => {
-    // パス名を取得する
-    // http://localhost:8000/hoge に接続した場合"/hoge"が取得できる
-    const pathname = new URL(_req.url).pathname;
-    console.log(`pathname: ${pathname}`);
+        // パス名を取得する
+        // http://localhost:8000/hoge に接続した場合"/hoge"が取得できる
+        const pathname = new URL(_req.url).pathname;
+        console.log(`pathname: ${pathname}`);
 
-    // GET/shiritori: 直前の単語を返す
-    // 「===」は完全一致を確認する演算子
-    if (_req.method === "GET" && pathname === "/shiritori") {
-        const lastWord = wordHistory[wordHistory.length - 1] || "しりとり";
-        return new Response(
-            JSON.stringify({ lastWord }),
-            {
-                status: 200,
-                headers: { "Content-Type": "application/json; charset=utf-8" },
-            }
-        );
-
-    }
-    
-    // GET /history : 単語履歴を返す
-    else if (_req.method === "GET" && pathname === "/history") {
-        return new Response(
-            JSON.stringify({ history: wordHistory }),
-            {
-                status: 200,
-                headers: { "Content-Type": "application/json; charset=utf-8" },
-            }
-        );
-    }
-
-    // POST/shiritori: 次の単語を受け取って保存する
-    else if (_req.method === "POST" && pathname === "/shiritori") {
-        // リクエストのペイロードを取得
-        const requestJson = await _req.json();
-        // JSONの中からnextWordを取得
-        const nextWord = requestJson["nextWord"];
-
-        // 使用時に毎回取得する
-        const previousWord = wordHistory[wordHistory.length - 1];
-
-
-        // previousWordの末尾とnextWordの先頭が同一か確認
-        // previousWord.slice(-1)はpreviousWordの末尾の文字を取得
-        // nextWord.slice(0, 1)はnextWordの先頭の文字
-
-        if (previousWord.slice(-1) !== nextWord.slice(0, 1)) {
-            // // 同一であれば、previousWordを更新
-            // previousWord = nextWord;
+        // GET/shiritori: 直前の単語を返す
+        // 「===」は完全一致を確認する演算子
+        if (_req.method === "GET" && pathname === "/shiritori") {
+            const lastWord = wordHistory[wordHistory.length - 1] || "しりとり";
             return new Response(
-                JSON.stringify({
-                    "errorMessage": `「${previousWord.slice(-1)}」から始まる単語を入力してください。`,
-                    errorCode: "10001"
-                }),
+                JSON.stringify({ lastWord }),
                 {
-                    status: 400,  // HTTPステータスコード400はBad Requestを意味する
-                    headers: {
-                        "Content-Type": "application/json; charset=utf-8",
-                    },
-                },
+                    status: 200,
+                    headers: { "Content-Type": "application/json; charset=utf-8" },
+                }
             );
         }
+    
+        // GET /history : 単語履歴を返す
+        else if (_req.method === "GET" && pathname === "/history") {
+            return new Response(
+                JSON.stringify({ history: wordHistory }),
+                {
+                    status: 200,
+                    headers: { "Content-Type": "application/json; charset=utf-8" },
+                }
+            );
+        }
+
+        // POST/shiritori: 次の単語を受け取って保存する
+        else if (_req.method === "POST" && pathname === "/shiritori") {
+            // リクエストのペイロードを取得
+            const requestJson = await _req.json();
+            // JSONの中からnextWordを取得
+            const nextWord = requestJson["nextWord"];
+
+            // 使用時に毎回取得する
+            const previousWord = wordHistory[wordHistory.length - 1];
+
+
+            // previousWordの最後の文字を取得
+            let lastChar = previousWord.slice(-1);
+            // nextWordの最初の文字を取得
+            let firstChar = nextWord.slice(0, 1);
+
+            // previousWordの末尾とnextWordの先頭が同一か確認
+            // previousWord.slice(-1)はpreviousWordの末尾の文字を取得
+            // nextWord.slice(0, 1)はnextWordの先頭の文字
+            // if (previousWord.slice(-1) !== nextWord.slice(0, 1))
+
+            switch (lastChar) {
+                case "ー": // 長音符の場合
+                    // 長音符の場合は、その直前の文字を取得し、その文字の「母音」の音に帰着させる
+                    // ここが一番の修正点です。
+                    let charBeforeChoonpu = previousWord.slice(-2, -1); // 例: 「ラーメン」なら「メ」
+
+                    // 直前の文字の母音を推定してlastCharに設定
+                    if ("かきくけこがぎぐげごさしすせそざじずぜぞたちつてとだぢづでどなにぬねのはひふへほばびぶべぼぱぴぷぺぽまみむめもやゆよらりるれろわをん".includes(charBeforeChoonpu)) {
+                        // ひらがなであれば、その文字の母音を推測して設定
+                        if ("あかがさざたどなはばぱまやらわ".includes(charBeforeChoonpu)) {
+                            lastChar = "あ";
+                        } else if ("いきぎしじちぢにひびぴみり".includes(charBeforeChoonpu)) {
+                            lastChar = "い";
+                        } else if ("うくぐすずつつづぬふぶぷむゆる".includes(charBeforeChoonpu)) {
+                            lastChar = "う";
+                        } else if ("えけげせぜてでねへべぺめれ".includes(charBeforeChoonpu)) {
+                            lastChar = "え";
+                        } else if ("おこごそぞとどのはぼぽもよろを".includes(charBeforeChoonpu)) {
+                            lastChar = "お";
+                        }
+                    }
+                    break; // このbreakは削除するcase "ー" に対応
+                case "ゃ":
+                    lastChar = "や"; // 「ゃ」を「や」に変換
+                    break;
+                case "ゅ":
+                    lastChar = "ゆ";
+                    break;
+                case "ょ":
+                    lastChar = "よ";
+                    break;
+                case "ぁ":
+                    lastChar = "あ";
+                    break;
+                case "ぃ":
+                    lastChar = "い";
+                    break;
+                case "ぅ":
+                    lastChar = "う";
+                    break;
+                case "ぇ":
+                    lastChar = "え";
+                    break;
+                case "ぉ":
+                    lastChar = "お";
+                    break;
+                case "ゎ":
+                    lastChar = "わ";
+                    break;
+            }
+
+
+            // // 同一であれば、previousWordを更新
+            // previousWord = nextWord;
+            if( lastChar !== firstChar) {
+                return new Response(
+                    JSON.stringify({
+                        "errorMessage": `「${lastChar}」から始まる単語を入力してください。`,
+                        errorCode: "10001"
+                    }),
+                    {
+                        status: 400,  // HTTPステータスコード400はBad Requestを意味する
+                        headers: {
+                            "Content-Type": "application/json; charset=utf-8",
+                        },
+                    },
+                );
+            }
+        // }
 
         if (wordHistory.includes(nextWord)) {
             return new Response(
