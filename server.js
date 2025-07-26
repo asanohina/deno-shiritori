@@ -72,7 +72,7 @@ Deno.serve(async (_req) => {
         if (wordHistory.includes(nextWord)) {
             return new Response(
                 JSON.stringify({
-                    message: "「${nextWord}」はすでに使用されています。ゲームオーバー！",
+                    message: `「${nextWord}」はすでに使用されています。ゲームオーバー！`,
                     previousWord, // ゲームオーバーの原因となった単語
                     gameOver: true,
                 }),
@@ -92,7 +92,7 @@ Deno.serve(async (_req) => {
             // サーバーから「終了」のメッセージを返す
             return new Response(
                 JSON.stringify({
-                    "message": "「${nextWord}」で「ん」がつきました。ゲームオーバー！",
+                    "message": `「${nextWord}」で「ん」がつきました。ゲームオーバー！`,
                     "previousWord": nextWord,
                     "gameOver": true,
                 }),
