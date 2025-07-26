@@ -189,7 +189,7 @@ Deno.serve(
 
         return new Response(
             JSON.stringify({
-                message: "しりとりがリセットされました",
+                message: "しりとりがリセットされました。ゲームを開始します。",
                 previousWord: "しりとり",
             }),
             {

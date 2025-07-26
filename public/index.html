@@ -7,20 +7,76 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>しりとりゲーム</title>
   <link rel="stylesheet" href="styles.css">
+  <style>
+    .container {
+      display: flex;
+      /* フレックスボックスを使用*/
+      justify-content: space-between;
+      /* 子要素を左右に配置 */
+      padding: 20px;
+      /* パディングを追加 */
+    }
+
+    .game,
+    .rules {
+      width: 70%;
+      /* 各要素の幅を指定*/
+    }
+
+    .rules {
+      border-left: 2px solid #ccc;
+      /* 左側に境界線を追加 */
+      padding-left: 20px;
+      /* 左側のパディングを追加 */
+    }
+
+    li {
+      margin-bottom: 4px;
+      /* 各リストアイテムの下にスペースを追加 */
+    }
+  </style>
 </head>
 
-<body>
-  <!-- bodyタグの中には実際に表示するものなどを書く -->
-  <h1>しりとり</h1>
-  <!-- 現在の単語を表示する場所 -->
-  <p id="previousWord"></p>
-  <!-- 次の文字を入力するフォーム -->
-  <input id="nextWordInput" type="text" placeholder="次の単語を入力" />
-  <button id="nextWordSendButton">送信</button>
-  <button id="resetButton">リセット</button>
+<!-- bodyタグの中には実際に表示するものなどを書く -->
 
-  <h2>しりとり履歴</h2>
-  <ul id="historyList"></ul>
+<body>
+  <div class="container">
+    <!-- 左側：ゲーム -->
+    <div class="game">
+      <!-- タイトル -->
+      <h1>しりとり</h1>
+      <!-- 現在の単語を表示する場所 -->
+      <p id="previousWord"></p>
+      <!-- 次の文字を入力するフォーム -->
+      <input id="nextWordInput" type="text" placeholder="次の単語を入力" />
+      <button id="nextWordSendButton">送信</button>
+      <button id="resetButton">リセット</button>
+
+      <h2>しりとり履歴</h2>
+      <ul id="historyList"></ul>
+    </div>
+
+    <!-- 右側：ルール -->
+    <div class="rules">
+      <h2>ルール</h2>
+      <ul>
+        <li>前の単語の最後の文字と、入力する単語の最初の文字を一致させてください。</li>
+        <li>使った単語は再び使用することができません。</li>
+        <li>「ん」で終わる単語は使用できません。</li>
+        <li>半角カタカナ、全角カタカナは自動で平仮名に変換されます。</li>
+        <li>小文字は大文字に変換されます</li>
+        <ul>
+          <li style="font-size:0.8em;"> 例.「ゃ」→「や」、「ぁ」→「あ」</li>
+        </ul>
+        <li>「ー」は直前の単語の母音と同じ扱いになります。</li>
+        <ul>
+          <li style="font-size:0.8em;"> 例.「コーヒー」→「ヒ」の母音の「い」</li>
+        </ul>
+        <li>リセットを押すことで、ゲームを再スタートすることができます。</li>
+        </li>
+      </ul>
+    </div>
+  </div>
 
   <script src="/moji-master/dist/moji.js"></script>
 
