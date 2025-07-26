@@ -40,8 +40,44 @@
 <!-- bodyタグの中には実際に表示するものなどを書く -->
 
 <body>
+  <!-- モード選択ページ -->
+  <div id="modePage">
+    <h1 style="text-align:center;">しりとりゲーム</h1>
+    <h2 style="text-align:center;">モードを選択してください</h2>
+    <div align="center">
+      <button onclick="selectMode('normal')">ノーマルモード</button>
+    </div>
+    <div align="center">
+      <button onclick="selectMode('limited')"> 時間制限モード </button>
+    </div>
+  </div>
+
   <!-- ゲームページ -->
+  <!-- style="display:none;・・・「最初は表示されない」 -->
   <div id="gamePage" style="display: none;">
+
+    <!--
+      <div class = "container">
+        <div class = "game">しりとり</div>
+        <div class = "rules">ルール</div>
+      </div>
+      しりとり画面 | ルール説明
+      のように横並びにレイアウトする 
+    -->
+
+
+    <!-- 
+      「h1」は見出しのタグで、一番大きい見出し
+      「h2」は二番目に大きい見出し
+      「p」はparagraph（段落）
+      id属性は、HTML要素に一意の識別子を与えるための属性
+      idは1ページ内で一回しか使用できない、「固有の名前」をつけるための属性
+      「input」はユーザーが入力できるフィールド
+      「button」はボタンを作成するためのタグ
+      「ul」はunordered list（順不同リスト）を作成するためのタグ
+      「li」はlist item（リストアイテム）を作成するためのタグ
+    -->
+
     <div class="container">
       <!-- 左側：ゲーム -->
       <div class="game">
@@ -51,13 +87,15 @@
         <p id="previousWord"></p>
         <!-- 次の文字を入力するフォーム -->
         <input id="nextWordInput" type="text" placeholder="次の単語を入力" />
+        <!-- 送信ボタン、リセットボタン -->
         <button id="nextWordSendButton">送信</button>
         <button id="resetButton">リセット</button>
 
-        <p id="timerDisplay" style="color:red; font-weight:bold;">残り時間: 10秒</p>
+        <p id="timerDisplay" style="color:red; font-weight:bold;"></p>
 
         <h2>しりとり履歴</h2>
         <p id="recordText" style="color: red; font-weight: bold;"></p>
+        <!-- 履歴を表示 -->
         <ul id="historyList"></ul>
       </div>
 
@@ -83,11 +121,13 @@
           </li>
         </ul>
       </div>
+      <!-- ボタンの上側に20pxの余白を空ける -->
       <div style="margin-top: 20px;">
         <button onclick="backToMode()">モード選択に戻る</button>
       </div>
     </div>
 
+    <!-- 外部のJavaScriptファイル（moji.js）を読み込むためのタグ -->
     <script src="/moji-master/dist/moji.js"></script>
 
     <!-- JavaScriptを実行 -->
@@ -99,19 +139,50 @@
         document.getElementById("modePage").style.display = "block";
       }
 
-      // モード選択後にゲームページを表示する関数
+      // しりとりの履歴を取得し、表示する
       async function updateHistory() {
+
+        //「/history」というURLにアクセスし、サーバーから履歴を取得
+        // fetch()とは、指定したURLにHTTPリクエストを送信し、レスポンスを取得するための関数
         const response = await fetch("/history");
+
+        // レスポンスのステータスが200（成功）の時の処理
         if (response.status === 200) {
+
+          // awaitとは、非同期処理が完了するまで待機するためのキーワード
           const data = await response.json();
 
           // 履歴のテキストを更新
-          const historyList = document.querySelector("#historyList");
-          historyList.innerHTML = ""; // 既存のリストをクリア
+          /*
+            HTMLの中にあるidが「 historyList の要素」を取得する
 
+            document.querySelector()とは、特定の要素を探す関数
+            「#historyList」=「<ul id="historyList"></ul>」　リスト要素を指す
+
+          */
+          const historyList = document.querySelector("#historyList");
+          // innerHTMLはHTML要素の中身を読み書きするためのプロパティ
+          // innerHTMLを空にして、既存のリストをクリア
+          historyList.innerHTML = "";
+
+
+          // data.historyは、サーバーから取得した履歴の配列
+          // for...ofループを使って、その配列を先頭から1つずつ取り出す
+          // 各単語がwordという変数に格納される
+
+          // よって、historyList.innerHTML = "";でリストを空にしても値は正常に更新され続ける！
           for (const word of data.history) {
-            const li = document.createElement("li");
-            li.textContent = word;
+            const li = document.createElement("li");  // <li></li>を作成
+            li.textContent = word;  // <li></li>の中にwordの中身を追加
+
+            /* <ul id="historyList"></ul>の中に<li></li>を追加
+              appendChild()は、指定した要素を親要素の最後に追加するためのメソッド
+              <ul id="historyList">
+                <li>りんご</li>
+                <li>ごりら</li>
+                <li>ラッパ</li>
+              </ul>
+            */
             historyList.appendChild(li);
           }
         }
@@ -119,7 +190,9 @@
 
       // 送信ボタン押下時の処理
       async function sendWord() {
-        const nextWordInput = document.querySelector("#nextWordInput");
+        const nextWordInput = document.querySelector("#nextWordInput");  // 入力フィールドを取得
+        // .valueで入力フィールド（ユーザーが入力した文字列）の値を取得
+        // .trim()で前後の空白を削除　「 りんご 」→「りんご」
         let nextWordInputText = nextWordInput.value.trim();
 
         if (!nextWordInputText) {
@@ -138,22 +211,24 @@
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 5000); // 5秒でタイムアウト
 
+        // fetch()を使ってサーバーにリクエストを送信
+        // 送信した単語を判定
         try {
           const response = await fetch("/shiritori", {
-            method: "POST",
+            method: "POST",           // POSTメソッドでリクエスト
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ nextWord: nextWordInputText }),
             signal: controller.signal // タイムアウトシグナルを渡す
           });
 
-          clearTimeout(timeoutId); // 成功したらタイムアウトをクリア
+          clearTimeout(timeoutId);    // 成功したらタイムアウトをクリア
 
-          if (response.status !== 200) {
-            const errorJson = await response.json();
+          if (response.status !== 200) {                // エラーの場合
+            const errorJson = await response.json();    // サーバーから送られるエラーメッセージをJSON形式で取得
             alert(errorJson["errorMessage"]);
           } else {
             const result = await response.json();
-            const paragraph = document.querySelector("#previousWord");
+            const paragraph = document.querySelector("#previousWord");  // 直前の単語を表示する段落要素を取得
             paragraph.innerHTML = `前の単語: ${result.previousWord}`;
             nextWordInput.value = "";  // 入力フィールドをクリア
 
@@ -170,7 +245,7 @@
               try {
                 const historyResponse = await fetch("/history");
                 const historyData = await historyResponse.json();
-                const count = historyData.history.length - 1; // 最初の単語を除外
+                const count = historyData.history.length - 1; // 配列の要素数を取得しcountに定数を代入　最初の単語は要素数から除外
                 recordText.textContent = `記録は、${count}回です！`;
               } catch (e) {
                 console.error("履歴の取得に失敗しました:", e);
@@ -190,15 +265,17 @@
         }
       }
 
+      // しりとりアプリの初期化
+      // ページが読み込まれたとき（ウィンドウのロード完了時）に実行される
       window.onload = async () => {
         const paragraph = document.querySelector("#previousWord");
         try {
-          const response = await fetch("/shiritori", { method: "GET" });
+          const response = await fetch("/shiritori", { method: "GET" });  // 今のしりとりの最新単語を取得する
           if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
           }
           const data = await response.json();
-          const previousWord = data.lastWord || "しりとり";
+          const previousWord = data.lastWord;  // 帰ってきたJSONデータからlastword（最後の単語）を取得。
           paragraph.innerHTML = `前の単語: ${previousWord}`;
 
         } catch (error) {
@@ -207,7 +284,7 @@
         }
 
         await updateHistory();
-        document.querySelector("#nextWordSendButton").onclick = sendWord;
+        document.querySelector("#nextWordSendButton").onclick = sendWord; // 送信ボタンのクリックされたときsendWord関数を実行する
       };
 
       // リセットボタンの押下時に実行
@@ -220,10 +297,11 @@
         );
 
         // status: 200以外が返ってきた場合にエラーを表示
+        // リセットが成功した場合、「前の単語」を更新
         if (response.status === 200) {
           const result = await response.json();
           const paragraph = document.querySelector("#previousWord");
-          paragraph.innerHTML = `前の単語: ${result.previousWord}`;
+          paragraph.innerHTML = `前の単語: ${result.previousWord}`; // リセット後の初期単語を更新
           alert(result.message);
 
           await updateHistory();
@@ -249,20 +327,6 @@
       };
     </script>
   </div>
-
-  <!-- モード選択ページへ戻る -->
-  <div id="modePage">
-    <h1 style="text-align:center;">しりとりゲーム</h1>
-    <h2 style="text-align:center;">モードを選択してください</h2>
-    <div align="center">
-      <button onclick="selectMode('normal')">ノーマルモード</button>
-    </div>
-    <div align="center">
-      <button onclick="selectMode('limited')"> 時間制限モード </button>
-    </div>
-  </div>
-
-
 
 </body>
 
