@@ -386,6 +386,11 @@
         await updateHistory();
         document.querySelector("#nextWordSendButton").onclick = sendWord; // 送信ボタンのクリックされたときsendWord関数を実行する
 
+        document.querySelector("#nextWordInput").onkeydown = function (event) {
+          if (event.key === 'Enter') {
+            sendWord();  // Enterキーが押されたときにsendWord関数を実行
+          }
+        }
       };
 
       // リセットボタンの押下時に実行
@@ -410,7 +415,15 @@
           document.querySelector("#nextWordInput").disabled = false; // 入力フィールドを有効化
           document.querySelector("#nextWordSendButton").disabled = false; // 送信ボタンを有効化
 
+          nextWordInput.value = "";  // 入力フィールドをクリア
           document.querySelector("#recordText").textContent = ""; // 記録表示をクリア
+
+          if (currentMode === "limited") {
+            startTimer();  // 制限時間モードの場合、タイマーを再スタート
+          } else {
+            stopTimer();  // ノーマルモードの場合、タイマーを停止
+            clearTimerDisplay();  // タイマーの表示を消す
+          }
         } else {
           alert("リセットに失敗しました。");
         }
