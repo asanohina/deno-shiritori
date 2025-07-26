@@ -19,7 +19,7 @@
 
     .game,
     .rules {
-      width: 70%;
+      width: 48%;
       /* 各要素の幅を指定*/
     }
 
@@ -40,180 +40,229 @@
 <!-- bodyタグの中には実際に表示するものなどを書く -->
 
 <body>
-  <div class="container">
-    <!-- 左側：ゲーム -->
-    <div class="game">
-      <!-- タイトル -->
-      <h1>しりとり</h1>
-      <!-- 現在の単語を表示する場所 -->
-      <p id="previousWord"></p>
-      <!-- 次の文字を入力するフォーム -->
-      <input id="nextWordInput" type="text" placeholder="次の単語を入力" />
-      <button id="nextWordSendButton">送信</button>
-      <button id="resetButton">リセット</button>
+  <!-- ゲームページ -->
+  <div id="gamePage" style="display: none;">
+    <div class="container">
+      <!-- 左側：ゲーム -->
+      <div class="game">
+        <!-- タイトル -->
+        <h1>しりとり</h1>
+        <!-- 現在の単語を表示する場所 -->
+        <p id="previousWord"></p>
+        <!-- 次の文字を入力するフォーム -->
+        <input id="nextWordInput" type="text" placeholder="次の単語を入力" />
+        <button id="nextWordSendButton">送信</button>
+        <button id="resetButton">リセット</button>
 
-      <h2>しりとり履歴</h2>
-      <ul id="historyList"></ul>
+        <p id="timerDisplay" style="color:red; font-weight:bold;">残り時間: 10秒</p>
+
+        <h2>しりとり履歴</h2>
+        <p id="recordText" style="color: red; font-weight: bold;"></p>
+        <ul id="historyList"></ul>
+      </div>
+
+      <!-- 右側：ルール -->
+      <div class="rules">
+        <h2>ルール</h2>
+        <ul>
+          <li id="limitedRule" style="color:red; display:none;">制限モードでは、10秒以内に次の単語を入力しなければいけません。</li>
+          <li>前の単語の最後の文字と、入力する単語の最初の文字を一致させてください。</li>
+          <li>最初の単語はランダムで設定されます。</li>
+          <li>使った単語を再び使用することができません。</li>
+          <li>「ん」で終わる単語は使用できません。</li>
+          <li>半角カタカナ、全角カタカナは自動で平仮名に変換されます。</li>
+          <li>小文字は大文字に変換されます</li>
+          <ul>
+            <li style="font-size:0.8em;"> 例.「ゃ」→「や」、「ぁ」→「あ」</li>
+          </ul>
+          <li>「ー」は直前の単語の母音と同じ扱いになります。</li>
+          <ul>
+            <li style="font-size:0.8em;"> 例.「コーヒー」→「ヒ」の母音の「い」</li>
+          </ul>
+          <li>リセットを押すことで、ゲームを再スタートすることができます。</li>
+          </li>
+        </ul>
+      </div>
+      <div style="margin-top: 20px;">
+        <button onclick="backToMode()">モード選択に戻る</button>
+      </div>
     </div>
 
-    <!-- 右側：ルール -->
-    <div class="rules">
-      <h2>ルール</h2>
-      <ul>
-        <li>前の単語の最後の文字と、入力する単語の最初の文字を一致させてください。</li>
-        <li>使った単語は再び使用することができません。</li>
-        <li>「ん」で終わる単語は使用できません。</li>
-        <li>半角カタカナ、全角カタカナは自動で平仮名に変換されます。</li>
-        <li>小文字は大文字に変換されます</li>
-        <ul>
-          <li style="font-size:0.8em;"> 例.「ゃ」→「や」、「ぁ」→「あ」</li>
-        </ul>
-        <li>「ー」は直前の単語の母音と同じ扱いになります。</li>
-        <ul>
-          <li style="font-size:0.8em;"> 例.「コーヒー」→「ヒ」の母音の「い」</li>
-        </ul>
-        <li>リセットを押すことで、ゲームを再スタートすることができます。</li>
-        </li>
-      </ul>
-    </div>
-  </div>
+    <script src="/moji-master/dist/moji.js"></script>
 
-  <script src="/moji-master/dist/moji.js"></script>
+    <!-- JavaScriptを実行 -->
+    <script>
+      // モード選択ページを表示する関数
+      function backToMode() {
+        // ゲームページを非表示にし、モード選択ページを表示
+        document.getElementById("gamePage").style.display = "none";
+        document.getElementById("modePage").style.display = "block";
+      }
 
-  <!-- JavaScriptを実行 -->
-  <script>
-    async function updateHistory() {
-      const response = await fetch("/history");
-      if (response.status === 200) {
-        const data = await response.json();
-        const historyList = document.querySelector("#historyList");
-        historyList.innerHTML = ""; // 既存のリストをクリア
+      // モード選択後にゲームページを表示する関数
+      async function updateHistory() {
+        const response = await fetch("/history");
+        if (response.status === 200) {
+          const data = await response.json();
 
-        for (const word of data.history) {
-          const li = document.createElement("li");
-          li.textContent = word;
-          historyList.appendChild(li);
+          // 履歴のテキストを更新
+          const historyList = document.querySelector("#historyList");
+          historyList.innerHTML = ""; // 既存のリストをクリア
+
+          for (const word of data.history) {
+            const li = document.createElement("li");
+            li.textContent = word;
+            historyList.appendChild(li);
+          }
         }
       }
-    }
 
-    // 送信ボタン押下時の処理
-    async function sendWord() {
-      const nextWordInput = document.querySelector("#nextWordInput");
-      let nextWordInputText = nextWordInput.value.trim();
+      // 送信ボタン押下時の処理
+      async function sendWord() {
+        const nextWordInput = document.querySelector("#nextWordInput");
+        let nextWordInputText = nextWordInput.value.trim();
 
-      if (!nextWordInputText) {
-        alert("単語を入力してください。");
-        return;
+        if (!nextWordInputText) {
+          alert("単語を入力してください。");
+          return;
+        }
+
+        // mojiを使って半角カタカナと全角カタカナをひらがなに変換
+        nextWordInputText = moji(nextWordInputText)
+          .convert("HK", "HG")  // 半角カナ→ひらがな
+          .convert("KK", "HG")  // 全角カナ→ひらがな
+          .toString();
+
+
+        // タイムアウトを設定するAbortsController
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5秒でタイムアウト
+
+        try {
+          const response = await fetch("/shiritori", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ nextWord: nextWordInputText }),
+            signal: controller.signal // タイムアウトシグナルを渡す
+          });
+
+          clearTimeout(timeoutId); // 成功したらタイムアウトをクリア
+
+          if (response.status !== 200) {
+            const errorJson = await response.json();
+            alert(errorJson["errorMessage"]);
+          } else {
+            const result = await response.json();
+            const paragraph = document.querySelector("#previousWord");
+            paragraph.innerHTML = `前の単語: ${result.previousWord}`;
+            nextWordInput.value = "";  // 入力フィールドをクリア
+
+            // ゲーム―オーバー
+            if (result.gameOver === true) {
+              // ゲームオーバーの場合、入力フォームと送信ボタンを削除
+              document.querySelector("#nextWordInput").remove();
+              document.querySelector("#nextWordSendButton").remove();
+              alert(result.message);  // ゲームオーバーメッセージを表示
+
+              // 記録表示
+              const recordText = document.querySelector("#recordText");
+
+              try {
+                const historyResponse = await fetch("/history");
+                const historyData = await historyResponse.json();
+                const count = historyData.history.length - 1; // 最初の単語を除外
+                recordText.textContent = `記録は、${count}回です！`;
+              } catch (e) {
+                console.error("履歴の取得に失敗しました:", e);
+                recordText.textContent = "記録を取得できませんでした。";
+              }
+            }
+            await updateHistory();  // 履歴を更新
+          }
+        } catch (error) {
+          clearTimeout(timeoutId);
+          if (error.name === 'AbortError') {
+            alert("リクエストがタイムアウトしました。ネットワーク接続を確認してください。");
+          } else {
+            alert(`通信エラーが発生しました: ${error.message}`);
+          }
+          console.error("Fetch error:", error);
+        }
       }
 
-      // mojiを使って半角カタカナと全角カタカナをひらがなに変換
-      nextWordInputText = moji(nextWordInputText)
-        .convert("HK", "HG")  // 半角カナ→ひらがな
-        .convert("KK", "HG")  // 全角カナ→ひらがな
-        .toString();
+      window.onload = async () => {
+        const paragraph = document.querySelector("#previousWord");
+        try {
+          const response = await fetch("/shiritori", { method: "GET" });
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          const data = await response.json();
+          const previousWord = data.lastWord || "しりとり";
+          paragraph.innerHTML = `前の単語: ${previousWord}`;
 
+        } catch (error) {
+          console.error("初期単語の取得に失敗しました:", error);
+          paragraph.innerHTML = "初期単語の読み込みに失敗しました。"; // エラー表示
+        }
 
-      // タイムアウトを設定するAbortsController
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5秒でタイムアウト
+        await updateHistory();
+        document.querySelector("#nextWordSendButton").onclick = sendWord;
+      };
 
-      try {
-        const response = await fetch("/shiritori", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ nextWord: nextWordInputText }),
-          signal: controller.signal // タイムアウトシグナルを渡す
-        });
+      // リセットボタンの押下時に実行
+      document.querySelector("#resetButton").onclick = async (event) => {
+        const response = await fetch(
+          "/reset",
+          {
+            method: "POST",
+          }
+        );
 
-        clearTimeout(timeoutId); // 成功したらタイムアウトをクリア
-
-        if (response.status !== 200) {
-          const errorJson = await response.json();
-          alert(errorJson["errorMessage"]);
-        } else {
+        // status: 200以外が返ってきた場合にエラーを表示
+        if (response.status === 200) {
           const result = await response.json();
           const paragraph = document.querySelector("#previousWord");
           paragraph.innerHTML = `前の単語: ${result.previousWord}`;
-          nextWordInput.value = "";  // 入力フィールドをクリア
+          alert(result.message);
 
-          if (result.gameOver === true) {
-            // ゲームオーバーの場合、入力フォームと送信ボタンを削除
-            document.querySelector("#nextWordInput").remove();
-            document.querySelector("#nextWordSendButton").remove();
-            alert(result.message);  // ゲームオーバーメッセージを表示
+          await updateHistory();
+
+          // 入力フォームと送信ボタンがなければ再追加
+          if (!document.querySelector("#nextWordInput")) {
+            const input = document.createElement("input");
+            input.id = "nextWordInput";
+            input.type = "text";
+            const sendButton = document.createElement("button");
+            sendButton.id = "nextWordSendButton";
+            sendButton.textContent = "送信";
+            sendButton.onclick = sendWord;
+
+            const resetButton = document.querySelector("#resetButton");
+            document.body.insertBefore(input, resetButton);
+            document.body.insertBefore(sendButton, resetButton);
           }
-          await updateHistory();  // 履歴を更新
-        }
-      } catch (error) {
-        clearTimeout(timeoutId);
-        if (error.name === 'AbortError') {
-          alert("リクエストがタイムアウトしました。ネットワーク接続を確認してください。");
+
         } else {
-          alert(`通信エラーが発生しました: ${error.message}`);
+          alert("リセットに失敗しました。");
         }
-        console.error("Fetch error:", error);
-      }
-    }
+      };
+    </script>
+  </div>
 
-    window.onload = async () => {
-      const paragraph = document.querySelector("#previousWord");
-      try {
-        const response = await fetch("/shiritori", { method: "GET" });
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
-        const previousWord = data.lastWord || "しりとり";
-        paragraph.innerHTML = `前の単語: ${previousWord}`;
+  <!-- モード選択ページへ戻る -->
+  <div id="modePage">
+    <h1 style="text-align:center;">しりとりゲーム</h1>
+    <h2 style="text-align:center;">モードを選択してください</h2>
+    <div align="center">
+      <button onclick="selectMode('normal')">ノーマルモード</button>
+    </div>
+    <div align="center">
+      <button onclick="selectMode('limited')"> 時間制限モード </button>
+    </div>
+  </div>
 
-      } catch (error) {
-        console.error("初期単語の取得に失敗しました:", error);
-        paragraph.innerHTML = "初期単語の読み込みに失敗しました。"; // エラー表示
-      }
 
-      await updateHistory();
-      document.querySelector("#nextWordSendButton").onclick = sendWord;
-    };
-
-    // リセットボタンの押下時に実行
-    document.querySelector("#resetButton").onclick = async (event) => {
-      const response = await fetch(
-        "/reset",
-        {
-          method: "POST",
-        }
-      );
-
-      // status: 200以外が返ってきた場合にエラーを表示
-      if (response.status === 200) {
-        const result = await response.json();
-        const paragraph = document.querySelector("#previousWord");
-        paragraph.innerHTML = `前の単語: ${result.previousWord}`;
-        alert(result.message);
-
-        await updateHistory();
-
-        // 入力フォームと送信ボタンがなければ再追加
-        if (!document.querySelector("#nextWordInput")) {
-          const input = document.createElement("input");
-          input.id = "nextWordInput";
-          input.type = "text";
-          const sendButton = document.createElement("button");
-          sendButton.id = "nextWordSendButton";
-          sendButton.textContent = "送信";
-          sendButton.onclick = sendWord;
-
-          const resetButton = document.querySelector("#resetButton");
-          document.body.insertBefore(input, resetButton);
-          document.body.insertBefore(sendButton, resetButton);
-        }
-
-      } else {
-        alert("リセットに失敗しました。");
-      }
-    };
-  </script>
 
 </body>
 
