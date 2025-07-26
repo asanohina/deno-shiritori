@@ -103,8 +103,7 @@
       <div class="rules">
         <h2>ルール</h2>
         <ul>
-          <li id="limitedRule" style="color:red; display:none;">制限モードでは、10秒以内に次の単語を入力しなければいけません。</li>
-          <li>前の単語の最後の文字と、入力する単語の最初の文字を一致させてください。</li>
+          <li id="limitedRule" style="color:red; display:none;">時間制限モードでは、10秒以内に次の単語を入力しなければいけません。</li>
           <li>最初の単語はランダムで設定されます。</li>
           <li>使った単語を再び使用することができません。</li>
           <li>「ん」で終わる単語は使用できません。</li>
@@ -195,13 +194,41 @@
         timerDisplay.textContent = "";  // タイマー表示を空にする
       }
 
-
-
       // モード選択ページを表示する関数
-      function backToMode() {
+      async function backToMode() {
+        // サーバーにリセットを要求
+        try {
+          const response = await fetch("/reset", { method: "POST" });
+          if (response.status !== 200) {
+            alert("ゲーム状態のリセットに失敗しました。");
+          }
+        } catch (e) {
+          console.error("リセットリクエストに失敗しました", e);
+        }
+
+        // ゲームページの要素をリセット
+        document.querySelector("#previousWord").textContent = "";  // 前の単語をクリア
+        document.querySelector("#nextWordInput").value = "";  // 入力フィールドをクリア
+        document.querySelector("#nextWordInput").disabled = false;  // 入力フィールドを有効化
+        document.querySelector("#nextWordSendButton").disabled = false; // 送信ボタンを有効化
+
         // モード選択ページを表示し、ゲームページを非表示
         document.getElementById("modePage").style.display = "block";
         document.getElementById("gamePage").style.display = "none";
+        // 記録表示をクリア
+        document.querySelector("#recordText").textContent = "";
+
+        // 最新の単語をサーバーから取得する場合
+        try {
+          const response = await fetch("/shiritori");
+          if (response.ok) {
+            const result = await response.json();
+            document.querySelector("#previousWord").innerHTML = `前の単語: ${result.lastWord}`;
+          }
+        } catch (e) {
+          console.error("単語の取得に失敗しました", e);
+        }
+        await updateHistory();  // 履歴を更新する関数を呼び出す
       }
 
       // しりとりの履歴を取得し、表示する
@@ -306,9 +333,10 @@
             if (result.gameOver === true) {
               // ゲーム終了したらタイマー停止
               stopTimer();
-              // ゲームオーバーの場合、入力フォームと送信ボタンを削除
-              document.querySelector("#nextWordInput").remove();
-              document.querySelector("#nextWordSendButton").remove();
+              // ゲームオーバーの場合、入力フォームと送信ボタンを無効化
+              document.querySelector("#nextWordInput").disabled = true;
+              document.querySelector("#nextWordSendButton").disabled = true;
+              // リセットボタンは残す
               alert(result.message);  // ゲームオーバーメッセージを表示
 
               // 記録表示
@@ -379,21 +407,10 @@
 
           await updateHistory();
 
-          // 入力フォームと送信ボタンがなければ再追加
-          if (!document.querySelector("#nextWordInput")) {
-            const input = document.createElement("input");
-            input.id = "nextWordInput";
-            input.type = "text";
-            const sendButton = document.createElement("button");
-            sendButton.id = "nextWordSendButton";
-            sendButton.textContent = "送信";
-            sendButton.onclick = sendWord;
+          document.querySelector("#nextWordInput").disabled = false; // 入力フィールドを有効化
+          document.querySelector("#nextWordSendButton").disabled = false; // 送信ボタンを有効化
 
-            const resetButton = document.querySelector("#resetButton");
-            document.body.insertBefore(input, resetButton);
-            document.body.insertBefore(sendButton, resetButton);
-          }
-
+          document.querySelector("#recordText").textContent = ""; // 記録表示をクリア
         } else {
           alert("リセットに失敗しました。");
         }
