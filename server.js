@@ -18,16 +18,15 @@ Deno.serve(
     // GET/shiritori: 直前の単語を返す
     // 「===」は完全一致を確認する演算子
     if (_req.method === "GET" && pathname === "/shiritori") {
-        const lastWord = wordHistory[wordHistory.length - 1];
+        const lastWord = wordHistory[wordHistory.length - 1] || "しりとり";
         return new Response(
-            JSON.stringify({ lastWord: lastWord }), // JSONを返す
+            JSON.stringify({ lastWord }),
             {
                 status: 200,
-                headers: {
-                    "Content-Type": "application/json; charset=utf-8"
-                },
+                headers: { "Content-Type": "application/json; charset=utf-8" },
             }
         );
+
     }
     
     // GET /history : 単語履歴を返す
