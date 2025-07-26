@@ -132,11 +132,76 @@
 
     <!-- JavaScriptを実行 -->
     <script>
+      let currentMode = "normal";  // 現在のモード
+      let timeLimit = 10;          // 制限時間10秒
+      let timerId = null;          // タイマーID
+      let remainingTime = timeLimit;  // 残り時間
+
+
+      function selectMode(mode) {  // 引数modeに"normal"または"limited"が入る
+        currentMode = mode;
+        // モード選択ページを非表示にし、ゲームページを表示
+        document.getElementById("modePage").style.display = "none";
+        document.getElementById("gamePage").style.display = "block";
+
+        // 制限モードのルール文を表示・非表示切り替え
+        // 条件式 ? 条件がtrueのときの値 : 条件がfalseのときの値
+        document.getElementById("limitedRule").style.display = (mode === "limited") ? "list-item" : "none";
+
+        if (mode === "limited") {
+          startTimer();
+        } else {
+          // ノーマルモードの場合、タイマーを停止
+          stopTimer();  // タイマーを停止する関数
+          clearTimerDisplay();  // タイマーの表示を消す
+        }
+      }
+
+      function startTimer() {
+        stopTimer();  // 既存のタイマーを停止
+
+        remainingTime = timeLimit;  // 残り時間をリセット
+        updateTimerDisplay();  // タイマーの表示を更新
+
+        timerId = setInterval(() => {
+          remainingTime--;  // 残り時間を1秒減らす
+          updateTimerDisplay();  // タイマーの表示を更新
+
+          if (remainingTime <= 0) {
+            stopTimer();  // タイマーを停止
+            alert("時間切れです！次の単語を入力できませんでした。");
+            document.querySelector("#nextWordInput").disabled = true;  // 入力フィールドを無効化
+          }
+        }, 1000);  // 1秒ごとに実行
+      }
+
+      function stopTimer() {
+        if (timerId) {
+          // clearInterval()は、setInterval()で設定したタイマーを停止するための関数
+          clearInterval(timerId);  // タイマーを停止
+          timerId = null;  // タイマーIDをリセット
+        }
+      }
+
+      // タイマー表示を制御する関数（予測変換により実装）
+      function updateTimerDisplay() {
+        const timerDisplay = document.getElementById("timerDisplay");
+        timerDisplay.textContent = `残り時間: ${remainingTime}秒`;
+      }
+
+      // タイマー表示を消す関数（予測変換により実装）
+      function clearTimerDisplay() {
+        const timerDisplay = document.getElementById("timerDisplay");
+        timerDisplay.textContent = "";  // タイマー表示を空にする
+      }
+
+
+
       // モード選択ページを表示する関数
       function backToMode() {
-        // ゲームページを非表示にし、モード選択ページを表示
-        document.getElementById("gamePage").style.display = "none";
+        // モード選択ページを表示し、ゲームページを非表示
         document.getElementById("modePage").style.display = "block";
+        document.getElementById("gamePage").style.display = "none";
       }
 
       // しりとりの履歴を取得し、表示する
@@ -223,8 +288,8 @@
 
           clearTimeout(timeoutId);    // 成功したらタイムアウトをクリア
 
-          if (response.status !== 200) {                // エラーの場合
-            const errorJson = await response.json();    // サーバーから送られるエラーメッセージをJSON形式で取得
+          if (response.status !== 200) {  // エラーの場合
+            const errorJson = await response.json();  // サーバーから送られるエラーメッセージをJSON形式で取得
             alert(errorJson["errorMessage"]);
           } else {
             const result = await response.json();
@@ -232,8 +297,15 @@
             paragraph.innerHTML = `前の単語: ${result.previousWord}`;
             nextWordInput.value = "";  // 入力フィールドをクリア
 
+            if (currentMode === "limited") {
+              // 制限時間モードの場合、タイマーをリセットして再スタート
+              startTimer();
+            }
+
             // ゲーム―オーバー
             if (result.gameOver === true) {
+              // ゲーム終了したらタイマー停止
+              stopTimer();
               // ゲームオーバーの場合、入力フォームと送信ボタンを削除
               document.querySelector("#nextWordInput").remove();
               document.querySelector("#nextWordSendButton").remove();
@@ -285,6 +357,7 @@
 
         await updateHistory();
         document.querySelector("#nextWordSendButton").onclick = sendWord; // 送信ボタンのクリックされたときsendWord関数を実行する
+
       };
 
       // リセットボタンの押下時に実行
