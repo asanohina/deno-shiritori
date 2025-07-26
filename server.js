@@ -2,7 +2,27 @@
 import { serveDir } from "jsr:@std/http/file-server";
 
 // 直前の単語を保持しておく
-let wordHistory = ["しりとり"];
+const boxes = {
+    sushi: ["まぐろ","いか","たこ","うに","えび","たまご","いくら","とびっこ","たら","ぶり","うなぎ","あなご","しめさば","たい","いわし","あじ","かんぱち","さわら","さより","ひらまさ","とびうお","おいかわ","ほうぼう","くえ","ししゃも","くじら","ふく","ふかひれ","あんこう","かずのこ","さざえ","かつお","はまち","えんがわ","ひらめ","かます","こはだ","ほたて","あわび","のどぐろ","しらこ","かに","かっぱまき","てっかまき","いなり"],
+    flowers: ["さくら","ばら","ゆり","つつじ","あじさい","ひまわり","きく","たんぽぽ","すみれ","あさがお","かきつばた","はなみずき","つつじ","しゃくやく","ふじ","もも","きんもくせい","つばき","みもれ","あやめ","おおばこ","かきつばた","かすみそう","ほうせんか","さざんか","さるすべり","しゃくなげ","しょうぶ","なでしこ","なのはな","せり","なずな","ごぎょう","はこべら","ほとけのざ","すずな","すずしろ","ほおずき","れんげ"],
+    animals: ["ねこ","いぬ","うさぎ","さる","きつね","たぬき","うし","ひつじ","ぶた","うま","かめ","かえる","へび","りす","あらいぐま","くま","ぞう","こあら","かば","とら","あいあい","かんがるー","あざらし","びーばー","いのしし","やまあらし","わおきつねざる","おおかみ","ぷれーりーどっぐ","かものはし","あひる","こうもり","はむすたー","やぎ","ぱんだ","ちーたー","れっさーぱんだ","ちんぱんじー","ごりら","となかい","まんとひひ","はりねずみ","いたち","しか","らくだ","なまけもの","くすくす","はいえな"],
+    fruits: ["りんご","ばなな","かき","ぶどう","おれんじ","すだち","ゆず","らいむ","かぼす","いちご","もも","すいか","なし","きうい","ぱいなっぷる","まんごー","さくらんぼ","ぐれーぷふるーつ","あせろら","すもも","ぶるーべりー","らずべりー","びわ","らいち","うめ","いちじく","ざくろ","どらごんふるーつ","なつめ","ぱぱいや","ろーずひっぷ"],
+}
+
+function getRandomCategoryName(){
+    const keys = Object.keys(boxes);
+    const index = Math.floor(Math.random() * keys.length);
+    return keys[index];
+}
+
+function getRandomWord(){
+    const category = getRandomCategoryName();
+    const items = boxes[category];
+    const word = items[Math.floor(Math.random() * items.length)];
+    return word;
+}
+
+let wordHistory = [getRandomWord()];
 
 // localhostにDenoのHTTPサーバーを展開
 Deno.serve(
@@ -185,16 +205,19 @@ Deno.serve(
     // POST /reset: リセットする
     // _req.methodとpathnameを確認
     else if (_req.method === "POST" && pathname === "/reset") {
-        wordHistory = ["しりとり"];  // 初期単語にリセット
+        const randomWord = getRandomWord();
+        wordHistory = [randomWord];  // 初期単語にリセット
 
         return new Response(
             JSON.stringify({
                 message: "しりとりがリセットされました。ゲームを開始します。",
-                previousWord: "しりとり",
+                previousWord: randomWord,
             }),
             {
                 status: 200,
-                headers: { "Content-Type": "application/json; charset=utf-8" },
+                headers: {
+                    "Content-Type": "application/json; charset=utf-8"
+                },
             }
         );
     }
