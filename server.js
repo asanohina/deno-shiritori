@@ -5,7 +5,11 @@ import { serveDir } from "jsr:@std/http/file-server";
 let wordHistory = ["しりとり"];
 
 // localhostにDenoのHTTPサーバーを展開
-Deno.serve(async (_req) => {
+Deno.serve(
+    {
+        port: 8000, // ポート番号
+    },
+    async (_req) => {
     // パス名を取得する
     // http://localhost:8000/hoge に接続した場合"/hoge"が取得できる
     const pathname = new URL(_req.url).pathname;
