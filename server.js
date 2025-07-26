@@ -31,7 +31,7 @@ Deno.serve(
     }
     
     // GET /history : 単語履歴を返す
-    if (_req.method === "GET" && pathname === "/history") {
+    else if (_req.method === "GET" && pathname === "/history") {
         return new Response(
             JSON.stringify({ history: wordHistory }),
             {
@@ -42,7 +42,7 @@ Deno.serve(
     }
 
     // POST/shiritori: 次の単語を受け取って保存する
-    if (_req.method === "POST" && pathname === "/shiritori") {
+    else if (_req.method === "POST" && pathname === "/shiritori") {
         // リクエストのペイロードを取得
         const requestJson = await _req.json();
         // JSONの中からnextWordを取得
@@ -127,7 +127,7 @@ Deno.serve(
 
     // POST /reset: リセットする
     // _req.methodとpathnameを確認
-    if (_req.method === "POST" && pathname === "/reset") {
+    else if (_req.method === "POST" && pathname === "/reset") {
         wordHistory = ["しりとり"];  // 初期単語にリセット
 
         return new Response(
