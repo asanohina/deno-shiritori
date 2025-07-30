@@ -83,13 +83,12 @@ Deno.serve(
             switch (lastChar) {
                 case "ー": // 長音符の場合
                     // 長音符の場合は、その直前の文字を取得し、その文字の「母音」の音に帰着させる
-                    // ここが一番の修正点です。
-                    let charBeforeChoonpu = previousWord.slice(-2, -1); // 例: 「ラーメン」なら「メ」
+                    let charBeforeChoonpu = previousWord.slice(-2, -1); // 直前の文字を取得
 
                     // 直前の文字の母音を推定してlastCharに設定
                     if ("かきくけこがぎぐげごさしすせそざじずぜぞたちつてとだぢづでどなにぬねのはひふへほばびぶべぼぱぴぷぺぽまみむめもやゆよらりるれろわをん".includes(charBeforeChoonpu)) {
                         // ひらがなであれば、その文字の母音を推測して設定
-                        if ("あかがさざたどなはばぱまやらわ".includes(charBeforeChoonpu)) {
+                        if ("あかがさざただなはばぱまやらわ".includes(charBeforeChoonpu)) {
                             lastChar = "あ";
                         } else if ("いきぎしじちぢにひびぴみり".includes(charBeforeChoonpu)) {
                             lastChar = "い";
@@ -97,7 +96,7 @@ Deno.serve(
                             lastChar = "う";
                         } else if ("えけげせぜてでねへべぺめれ".includes(charBeforeChoonpu)) {
                             lastChar = "え";
-                        } else if ("おこごそぞとどのはぼぽもよろを".includes(charBeforeChoonpu)) {
+                        } else if ("おこごそぞとどのほぼぽもよろを".includes(charBeforeChoonpu)) {
                             lastChar = "お";
                         }
                     }
